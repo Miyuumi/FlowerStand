@@ -51,6 +51,7 @@ onMounted(()=>{
                 <v-tab value="one">Plant</v-tab>
                 <v-tab value="two">Battle</v-tab>
                 <v-tab value="three">Stats</v-tab>
+                <v-tab value="four">Buffs</v-tab>
               </v-tabs>
 
               <v-card-text>
@@ -134,6 +135,10 @@ onMounted(()=>{
                           <td class="border-b p-2">{{ flower.damage }}</td>
                         </tr>
                         <tr>
+                          <td class="font-bold border-b p-2" style="font-size: 21px">Crit. Chance / Damage</td>
+                          <td class="border-b p-2">{{ (flower.critChance * 100).toFixed(2) }}% / {{ (flower.critDamage * 100).toFixed(2) }}%</td>
+                        </tr>
+                        <tr>
                           <td class="font-bold border-b p-2" style="font-size: 21px">Mana</td>
                           <td class="border-b p-2">{{flower.mana}} / {{ flower.maxmana }}</td>
                         </tr>
@@ -144,6 +149,14 @@ onMounted(()=>{
                         <tr>
                           <td class="font-bold border-b p-2" style="font-size: 21px">Cooldown</td>
                           <td class="border-b p-2">{{ flower.cooldown }}</td>
+                        </tr>
+                        <tr>
+                          <td class="font-bold border-b p-2" style="font-size: 21px">Trigger Chance</td>
+                          <td class="border-b p-2">{{ flower.triggerChance }}</td>
+                        </tr>
+                        <tr>
+                          <td class="font-bold border-b p-2" style="font-size: 21px">Buff / Debuff Duration</td>
+                          <td class="border-b p-2">{{ (flower.buffDuration * 100).toFixed(2) }}% / {{ (flower.debuffDuration * 100).toFixed(2) }}%</td>
                         </tr>
                       </tbody>
                     </table>
@@ -163,6 +176,16 @@ onMounted(()=>{
                         <tr>
                           <td class="font-bold border-b p-2" style="font-size: 21px">Mana Spent</td>
                           <td class="border-b p-2">{{ flower.manaSpent }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </v-tabs-window-item>
+                  <v-tabs-window-item value="four">
+                    <table class="w-full border-collapse h-[635px]" style="font-size: 18px">
+                      <tbody>
+                        <tr v-for="buff in flower.buffs">
+                          <td class="font-bold border-b p-2" style="font-size: 21px">{{buff.name}}</td>
+                          <td class="border-b p-2">{{ buff.description }}. Duration: {{ buff.duration }}</td>
                         </tr>
                       </tbody>
                     </table>

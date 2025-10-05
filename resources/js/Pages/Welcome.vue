@@ -65,8 +65,8 @@ const digPlant = ()=>{
 }
 
 onMounted(()=>{
-    console.log(Flowers);
-    inventory.value.push(Flowers[3]);
+    inventory.value.push(Flowers[5]);
+    inventory.value.push(Flowers[4]);
 });
 
 const start = ()=>{

@@ -1,3 +1,5 @@
+import { critChance } from "./Critical";
+
 export class Enemy {
   constructor({ name, x, y, health = 10, damage = 1, wave = 1, level = 1, speed = 1, size = 30, image = null }) {
     this.name = name;
@@ -17,10 +19,24 @@ export class Enemy {
     this.sprite = null;
   }
 
-  onTakeDamage(damage, projectile, resources, plants, enemies, source, projectiles, x, y) {
-    this.health -= damage;
-    source.damageDealt += damage;
-    source.onDamage(source, resources, plants, enemies, projectiles, x, y);
+  onTakeDamage(damage, projectile, damageTexts, resources, plants, enemies, source, projectiles, x, y) {
+    let dam = damage;
+    if(critChance(source.critChance)){
+      dam *= source.critDamage;
+
+      damageTexts.value.push({
+        x: this.x + this.size / 2,
+        y: this.y, // start above the enemy
+        text: dam.toFixed(2),
+        color: "red",
+        size: 16,
+        alpha: 1,
+        vy: -0.8, // upward speed
+    });
+    }
+    this.health -= dam;
+    source.damageDealt += dam;
+    source.onDamage(source, this, damageTexts, resources, plants, enemies, projectiles, x, y);
     if (this.health <= 0) {
       this.onDeath(source, damage, resources, enemies, plants, projectiles, x, y);
     }

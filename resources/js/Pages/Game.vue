@@ -15,6 +15,7 @@ const Enemies = ref([]);
 const enemyValue = ref(0);
 const projectiles = ref([]);
 const gameUpdate = ref(()=>{});
+const damageTexts = ref([]);
 
 const canvasRef = ref(null);
 let ctx = null;
@@ -26,22 +27,85 @@ const battleField = ref({
   height: 400,
 });
 
-let square = {
-  x: 1200,
-  y: 100,
-  size: 30,
-  speed: 1,
-  image: "/Characters/Fairy_1.png",
-  sprite: null,
-};
-
 const update = ()=>{
   console.log("Turn");
   fields.value.forEach((row, rowIndex) => {
     row.forEach((plant, colIndex) => {
       if (plant && typeof plant.onTurn === "function") {
+
+        if (plant.buffs && plant.buffs.length > 0) {
+          for (let i = plant.buffs.length - 1; i >= 0; i--) {
+            const buff = plant.buffs[i];
+
+            if (!buff.isApplied){
+              
+              if(!buff.stacking) {
+                const otherBuff = plant.buffs.find(b => b !== buff && b.name === buff.name);
+                if (otherBuff) {
+                  buff.duration = Math.max(buff.duration, otherBuff.duration);
+                  plant.buffs.splice(plant.buffs.indexOf(otherBuff), 1);
+                  damageTexts.value.push({
+                    x: colIndex * 30 + 65,
+                    y: rowIndex * 30 + 60,
+                    text: buff.name + " Refreshed",
+                    color: "green",
+                    size: 12,
+                    alpha: 1,
+                    vy: -0.8, // upward speed
+                  });
+                }else{
+                  if (buff.onApply) buff.onApply(plant, buff);
+                  damageTexts.value.push({
+                    x: colIndex * 30 + 65,
+                    y: rowIndex * 30 + 60,
+                    text: buff.name + " Applied",
+                    color: "green",
+                    size: 12,
+                    alpha: 1,
+                    vy: -0.8, // upward speed
+                  });
+                }
+              }else{
+                if (buff.onApply) buff.onApply(plant, buff);
+                damageTexts.value.push({
+                  x: colIndex * 30 + 65,
+                  y: rowIndex * 30 + 60,
+                  text: buff.name + " Applied",
+                  color: "green",
+                  size: 12,
+                  alpha: 1,
+                  vy: -0.8, // upward speed
+                });
+              }
+              buff.isApplied = true;
+            }
+
+            if (buff.onTurn) buff.onTurn(plant, buff);
+
+            buff.duration -= 0.1;
+
+            if (buff.duration <= 0) {
+              if (buff.onRemove) buff.onRemove(plant, buff);
+              plant.buffs.splice(i, 1);
+              damageTexts.value.push({
+                  x: colIndex * 30 + 65,
+                  y: rowIndex * 30 + 60,
+                  text: buff.name + " Ended",
+                  color: "red",
+                  size: 12,
+                  alpha: 1,
+                  vy: -0.8, // upward speed
+              });
+            }
+          }
+        }
+
         plant.onTurn(plant, resources, fields, enemies, projectiles, rowIndex, colIndex);
         
+        if(plant.mana < plant.maxmana){
+          plant.mana += 0.1;
+          if(plant.mana > plant.maxmana) plant.mana = plant.maxmana;
+        }
       }
     });
   });
@@ -97,8 +161,8 @@ function draw() {
   fields.value.forEach((row, rowIndex) => {
     row.forEach((plant, colIndex) => {
       if (plant && plant.sprite) {
-        const x = colIndex * 30;
-        const y = rowIndex * 30;
+        const x = 50 + (colIndex * 30);
+        const y = 50 + (rowIndex * 30);
         ctx.drawImage(plant.sprite, x, y, 30, 30);
       }
     });
@@ -120,7 +184,7 @@ function draw() {
       let source = fields.value[proj.location.x][proj.location.y]
       // console.log(proj);
       
-      proj.target.onTakeDamage(proj.damage, proj, resources, fields, enemies, source, projectiles, proj.location.x, proj.location.y);
+      proj.target.onTakeDamage(proj.damage, proj, damageTexts, resources, fields, enemies, source, projectiles, proj.location.x, proj.location.y);
 
       projectiles.value.splice(index, 1);
     } else {
@@ -134,6 +198,26 @@ function draw() {
     ctx.arc(proj.x, proj.y, proj.size, 0, Math.PI * 2);
     ctx.fill();
   });
+
+  for (let i = damageTexts.value.length - 1; i >= 0; i--) {
+    let dmg = damageTexts.value[i];
+
+    // Draw damage text
+    ctx.globalAlpha = dmg.alpha;
+    ctx.fillStyle = dmg.color;
+    ctx.font = `${dmg.size}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText(dmg.text, dmg.x, dmg.y);
+
+    // Animate (float upward + fade)
+    dmg.y += dmg.vy;
+    dmg.alpha -= 0.02;
+
+    if (dmg.alpha <= 0) {
+        damageTexts.value.splice(i, 1);
+    }
+  }
+  ctx.globalAlpha = 1;
 
   animationId = requestAnimationFrame(draw);
 }
